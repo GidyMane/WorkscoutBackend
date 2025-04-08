@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SEEKER
+  EMPLOYER
+  ADMIN
+}
+
+enum AppStatus {
+  PENDING
+  SHORTLISTED
+  REJECTED
+  INTERVIEW
+  HIRED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  REMOTE
+  INTERNSHIP
+}
+
+model Account {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  email             String              @unique
+  password          String
+  role              Role
+  profile           Profile?
+  company           Company?
+  applications      JobApplication[]
+  subscription      Subscription?
+  payments          Payment[]
+  userNotifications UserNotification[]
+  messagesSent      Message[]           @relation("SentMessages")
+  messagesReceived  Message[]           @relation("ReceivedMessages")
+  createdAt         DateTime            @default(now())
+}
+
+model Profile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  fullName  String
+  bio       String?
+  skills    String[]
+  resumeUrl String?
+  location  String?
+  account   Account  @relation(fields: [accountId], references: [id])
+  accountId String   @unique
+}
+
+model Company {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  location    String?
+  website     String?
+  logoUrl     String?
+  account     Account  @relation(fields: [accountId], references: [id])
+  accountId   String   @unique
+  jobs        Job[]
+}
+
+model Job {
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String
+  location     String
+  jobType      JobType
+  salary       Float?
+  company      Company            @relation(fields: [companyId], references: [id])
+  companyId    String
+  applications JobApplication[]
+  createdAt    DateTime           @default(now())
+}
+
+model JobApplication {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  account    Account    @relation(fields: [accountId], references: [id])
+  accountId  String
+  job        Job        @relation(fields: [jobId], references: [id])
+  jobId      String
+  status     AppStatus  @default(PENDING)
+  appliedAt  DateTime   @default(now())
+}
+
+model Plan {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  description   String?
+  price         Float
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  account       Account      @relation(fields: [accountId], references: [id])
+  accountId     String       @unique
+  plan          Plan         @relation(fields: [planId], references: [id])
+  planId        String
+  invoice       Invoice?
+  payments      Payment[]
+  startDate     DateTime
+  endDate       DateTime?
+  isActive      Boolean      @default(true)
+}
+
+model Payment {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  amount          Float
+  method          String
+  subscription    Subscription?  @relation(fields: [subscriptionId], references: [id])
+  subscriptionId  String?
+  account         Account        @relation(fields: [accountId], references: [id])
+  accountId       String
+  createdAt       DateTime       @default(now())
+}
+
+model Invoice {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
+  subscriptionId  String        @unique
+  total           Float
+  issuedAt        DateTime      @default(now())
+}
+
+model Notification {
+  id        String              @id @default(auto()) @map("_id") @db.ObjectId
+  message   String
+  createdAt DateTime            @default(now())
+  users     UserNotification[]
+}
+
+model UserNotification {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  account         Account       @relation(fields: [accountId], references: [id])
+  accountId       String
+  notification    Notification  @relation(fields: [notificationId], references: [id])
+  notificationId  String
+  isRead          Boolean       @default(false)
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  sender     Account  @relation("SentMessages", fields: [senderId], references: [id])
+  senderId   String
+  receiver   Account  @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId String
+  content    String
+  sentAt     DateTime @default(now())
+}
