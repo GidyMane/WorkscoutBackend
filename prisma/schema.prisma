@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["mongoDb"]
 }
 
 datasource db {
@@ -7,152 +8,112 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  SEEKER
-  EMPLOYER
-  ADMIN
-}
-
-enum AppStatus {
-  PENDING
-  SHORTLISTED
-  REJECTED
-  INTERVIEW
-  HIRED
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  REMOTE
-  INTERNSHIP
-}
-
 model Account {
-  id                String              @id @default(auto()) @map("_id") @db.ObjectId
-  email             String              @unique
-  password          String
-  role              Role
-  profile           Profile?
-  company           Company?
-  applications      JobApplication[]
-  subscription      Subscription?
-  payments          Payment[]
-  userNotifications UserNotification[]
-  messagesSent      Message[]           @relation("SentMessages")
-  messagesReceived  Message[]           @relation("ReceivedMessages")
-  createdAt         DateTime            @default(now())
+  id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
+  email                   String                  @unique
+  password                String
+  role                    Role
+  profile                 Profile?
+  jobApplicationDataStore JobApplicationDataStore?
+  subscription            Subscription?
+  payments                Payment[]
+  userNotifications       UserNotification[]
 }
 
 model Profile {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  fullName  String
-  bio       String?
-  skills    String[]
-  resumeUrl String?
-  location  String?
   account   Account  @relation(fields: [accountId], references: [id])
   accountId String   @unique
+  name      String
+  bio       String?
+  documents String[] // URLs or paths to uploaded CVs/resumes
 }
 
-model Company {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String?
-  location    String?
-  website     String?
-  logoUrl     String?
-  account     Account  @relation(fields: [accountId], references: [id])
-  accountId   String   @unique
-  jobs        Job[]
+model JobApplicationDataStore {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  account   Account  @relation(fields: [accountId], references: [id])
+  accountId String   @unique
+  jobs      Job[]
 }
 
 model Job {
-  id           String             @id @default(auto()) @map("_id") @db.ObjectId
-  title        String
-  description  String
-  location     String
-  jobType      JobType
-  salary       Float?
-  company      Company            @relation(fields: [companyId], references: [id])
-  companyId    String
-  applications JobApplication[]
-  createdAt    DateTime           @default(now())
-}
-
-model JobApplication {
-  id         String     @id @default(auto()) @map("_id") @db.ObjectId
-  account    Account    @relation(fields: [accountId], references: [id])
-  accountId  String
-  job        Job        @relation(fields: [jobId], references: [id])
-  jobId      String
-  status     AppStatus  @default(PENDING)
-  appliedAt  DateTime   @default(now())
-}
-
-model Plan {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  description   String?
-  price         Float
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  account       Account      @relation(fields: [accountId], references: [id])
-  accountId     String       @unique
-  plan          Plan         @relation(fields: [planId], references: [id])
-  planId        String
-  invoice       Invoice?
-  payments      Payment[]
-  startDate     DateTime
-  endDate       DateTime?
-  isActive      Boolean      @default(true)
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  jobApplicationStore  JobApplicationDataStore @relation(fields: [jobAppDataStoreId], references: [id])
+  jobAppDataStoreId    String
+  title                String
+  company              String
+  link                 String
+  status               JobStatus // e.g. APPLIED, SHORTLISTED, HIRED
+  dateApplied          DateTime @default(now())
 }
 
 model Payment {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  amount          Float
-  method          String
-  subscription    Subscription?  @relation(fields: [subscriptionId], references: [id])
-  subscriptionId  String?
-  account         Account        @relation(fields: [accountId], references: [id])
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  account         Account      @relation(fields: [accountId], references: [id])
   accountId       String
-  createdAt       DateTime       @default(now())
+  amount          Float
+  date            DateTime     @default(now())
+  subscriptionId  String?
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
+}
+
+model Subscription {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  account     Account    @relation(fields: [accountId], references: [id])
+  accountId   String     @unique
+  planId      String
+  plan        Plan       @relation(fields: [planId], references: [id])
+  invoice     Invoice?
+  payments    Payment[]
+  active      Boolean    @default(true)
+  startedAt   DateTime   @default(now())
+  expiresAt   DateTime
+}
+
+model Plan {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Float
+  durationInDays Int
+  subscriptions Subscription[]
 }
 
 model Invoice {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
   subscriptionId  String        @unique
-  total           Float
-  issuedAt        DateTime      @default(now())
+  issueDate       DateTime      @default(now())
+  amountDue       Float
+  isPaid          Boolean       @default(false)
 }
 
 model Notification {
-  id        String              @id @default(auto()) @map("_id") @db.ObjectId
-  message   String
-  createdAt DateTime            @default(now())
-  users     UserNotification[]
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  message           String
+  createdAt         DateTime          @default(now())
+  userNotifications UserNotification[]
 }
 
 model UserNotification {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  account         Account       @relation(fields: [accountId], references: [id])
-  accountId       String
-  notification    Notification  @relation(fields: [notificationId], references: [id])
-  notificationId  String
-  isRead          Boolean       @default(false)
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  notification   Notification  @relation(fields: [notificationId], references: [id])
+  notificationId String
+  account        Account       @relation(fields: [accountId], references: [id])
+  accountId      String
+  read           Boolean       @default(false)
+  receivedAt     DateTime      @default(now())
 }
 
-model Message {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  sender     Account  @relation("SentMessages", fields: [senderId], references: [id])
-  senderId   String
-  receiver   Account  @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId String
-  content    String
-  sentAt     DateTime @default(now())
+enum Role {
+  CLIENT
+  WORKSCOUT
+  ADMIN
+}
+
+enum JobStatus {
+  APPLIED
+  SHORTLISTED
+  HIRED
+  REJECTED
 }
