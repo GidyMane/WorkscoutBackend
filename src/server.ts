@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use(compression());
 app.use(cookieParser());
-app.use("/api/v1/", routes)
+app.use("/api/v1", routes)
 
 // Define a route for the root path ('/')
 app.get('/', (req: Request, res: Response) => {
