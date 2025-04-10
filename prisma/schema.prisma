@@ -11,6 +11,7 @@ datasource db {
 model Account {
   id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
   kindeId                 String                  @unique
+  email                   String                  @unique
   profile                 Profile?
   jobApplicationDataStore JobApplicationDataStore?
   subscription            Subscription?

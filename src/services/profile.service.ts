@@ -2,9 +2,7 @@ import prisma from "../client";
 
 
 export const createProfile = async (kindeId: string, profileData: any) => {
-  const account = await prisma.account.findFirst({ where: { 
-
-  } });
+  const account = await prisma.account.findFirst({ where: { kindeId  } });
   if (!account) throw new Error("Account not found");
 
   const existing = await prisma.profile.findUnique({ where: { accountId: account.id } });
