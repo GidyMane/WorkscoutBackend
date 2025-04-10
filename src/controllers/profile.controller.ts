@@ -3,8 +3,7 @@ import { Request, Response } from "express";
 import prisma from "../client";
 
 export const createProfile = async (req: Request, res: Response): Promise<void> => {
-  const { name, bio, documents } = req.body;
-  const kindeId = req.kindeId;
+  const { name, bio, documents, kindeId } = req.body;
 
   try {
     const account = await prisma.account.findUnique({
