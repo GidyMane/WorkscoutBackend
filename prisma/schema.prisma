@@ -16,8 +16,8 @@ model Account {
   onboardingstep          OnboardingStep @default(ONE)
   profile                 Profile?
   jobApplicationDataStore JobApplicationDataStore?
-  subscription  Subscription  @relation(fields: [subscriptionId], references: [id])
-  subscriptionId String   @db.ObjectId @unique
+  subscription  Subscription?  @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String?   @db.ObjectId @unique
   userNotifications       UserNotification[]
   
 }
