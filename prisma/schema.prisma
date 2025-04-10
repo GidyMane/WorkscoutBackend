@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["mongoDb"]
+  
 }
 
 datasource db {
@@ -10,9 +10,7 @@ datasource db {
 
 model Account {
   id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
-  email                   String                  @unique
-  password                String
-  role                    Role
+  kindeId                 String                  @unique
   profile                 Profile?
   jobApplicationDataStore JobApplicationDataStore?
   subscription            Subscription?
@@ -23,7 +21,7 @@ model Account {
 model Profile {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   account   Account  @relation(fields: [accountId], references: [id])
-  accountId String   @unique
+  accountId String   @db.ObjectId @unique
   name      String
   bio       String?
   documents String[] // URLs or paths to uploaded CVs/resumes
@@ -32,14 +30,14 @@ model Profile {
 model JobApplicationDataStore {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   account   Account  @relation(fields: [accountId], references: [id])
-  accountId String   @unique
+  accountId String   @db.ObjectId @unique
   jobs      Job[]
 }
 
 model Job {
   id                   String   @id @default(auto()) @map("_id") @db.ObjectId
   jobApplicationStore  JobApplicationDataStore @relation(fields: [jobAppDataStoreId], references: [id])
-  jobAppDataStoreId    String
+  jobAppDataStoreId    String   @db.ObjectId
   title                String
   company              String
   link                 String
@@ -50,18 +48,18 @@ model Job {
 model Payment {
   id              String       @id @default(auto()) @map("_id") @db.ObjectId
   account         Account      @relation(fields: [accountId], references: [id])
-  accountId       String
+  accountId       String       @db.ObjectId
   amount          Float
   date            DateTime     @default(now())
-  subscriptionId  String?
+  subscriptionId  String?      @db.ObjectId
   subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
 }
 
 model Subscription {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
   account     Account    @relation(fields: [accountId], references: [id])
-  accountId   String     @unique
-  planId      String
+  accountId   String     @db.ObjectId @unique
+  planId      String     @db.ObjectId
   plan        Plan       @relation(fields: [planId], references: [id])
   invoice     Invoice?
   payments    Payment[]
@@ -71,17 +69,17 @@ model Subscription {
 }
 
 model Plan {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  price       Float
-  durationInDays Int
-  subscriptions Subscription[]
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  price           Float
+  durationInDays  Int
+  subscriptions   Subscription[]
 }
 
 model Invoice {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
-  subscriptionId  String        @unique
+  subscriptionId  String        @db.ObjectId @unique
   issueDate       DateTime      @default(now())
   amountDue       Float
   isPaid          Boolean       @default(false)
@@ -98,9 +96,9 @@ model Notification {
 model UserNotification {
   id             String        @id @default(auto()) @map("_id") @db.ObjectId
   notification   Notification  @relation(fields: [notificationId], references: [id])
-  notificationId String
+  notificationId String        @db.ObjectId
   account        Account       @relation(fields: [accountId], references: [id])
-  accountId      String
+  accountId      String        @db.ObjectId
   read           Boolean       @default(false)
   receivedAt     DateTime      @default(now())
 }
