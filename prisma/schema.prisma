@@ -12,11 +12,21 @@ model Account {
   id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
   kindeId                 String                  @unique
   email                   String                  @unique
+  isOnboarded             Boolean   @default(false)
+  onboardingstep          OnboardingStep @default(ONE)
   profile                 Profile?
   jobApplicationDataStore JobApplicationDataStore?
-  subscription            Subscription?
-  payments                Payment[]
+  subscription  Subscription  @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String   @db.ObjectId @unique
   userNotifications       UserNotification[]
+  
+}
+
+enum OnboardingStep {
+  ONE
+  TWO
+  THREE
+  COMPLETED
 }
 
 model Profile {
@@ -24,9 +34,24 @@ model Profile {
   account   Account  @relation(fields: [accountId], references: [id])
   accountId String   @db.ObjectId @unique
   name      String
-  bio       String?
-  documents String[] // URLs or paths to uploaded CVs/resumes
+  bio       String  
+  email     String
+  gender     String
+  location   String
+  salary      String
+  jobtitle String
+  document   Document  @relation(fields: [documentId], references: [id])
+  documentId String   @db.ObjectId @unique
 }
+
+model Document {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  contentType String
+  data        Bytes
+  uploadedAt  DateTime @default(now())
+  Profile Profile[]
+} 
 
 model JobApplicationDataStore {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -46,27 +71,17 @@ model Job {
   dateApplied          DateTime @default(now())
 }
 
-model Payment {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  account         Account      @relation(fields: [accountId], references: [id])
-  accountId       String       @db.ObjectId
-  amount          Float
-  date            DateTime     @default(now())
-  subscriptionId  String?      @db.ObjectId
-  subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
-}
+
 
 model Subscription {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  account     Account    @relation(fields: [accountId], references: [id])
-  accountId   String     @db.ObjectId @unique
   planId      String     @db.ObjectId
   plan        Plan       @relation(fields: [planId], references: [id])
-  invoice     Invoice?
-  payments    Payment[]
   active      Boolean    @default(true)
   startedAt   DateTime   @default(now())
   expiresAt   DateTime
+
+  Account Account[]
 }
 
 model Plan {
@@ -74,17 +89,11 @@ model Plan {
   name            String
   price           Float
   durationInDays  Int
+  
   subscriptions   Subscription[]
+
 }
 
-model Invoice {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
-  subscriptionId  String        @db.ObjectId @unique
-  issueDate       DateTime      @default(now())
-  amountDue       Float
-  isPaid          Boolean       @default(false)
-}
 
 model Notification {
   id                String            @id @default(auto()) @map("_id") @db.ObjectId
