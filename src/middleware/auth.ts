@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 export const requireKindeUser = (req: Request, res: Response, next: NextFunction): void => {
+  console.log(req.body)
   const { kindeId } = req.body; // ✅ Now reading from the body
 
   if (!kindeId) {

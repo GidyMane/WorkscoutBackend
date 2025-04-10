@@ -20,6 +20,7 @@ app.use(compression());
 app.use(cookieParser());
 app.use("/api/v1", routes)
 
+
 // Define a route for the root path ('/')
 app.get('/', (req: Request, res: Response) => {
   // Send a response to the client
