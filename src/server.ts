@@ -1,11 +1,24 @@
 // Import the 'express' module along with 'Request' and 'Response' types from express
 import express, { Request, Response } from 'express';
+import cors from "cors"
+import cookieParser from "cookie-parser"
+import bodyParser from "body-parser"
+import compression from "compression"
+import routes from './routes/profile.routes';
+
 
 // Create an Express application
 const app = express();
 
 // Specify the port number for the server
 const port: number = 3000;
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(cors());
+app.use(compression());
+app.use(cookieParser());
+app.use("/api/v1/", routes)
 
 // Define a route for the root path ('/')
 app.get('/', (req: Request, res: Response) => {
