@@ -6,6 +6,7 @@ import { upload } from "../api/multerupload";
 import { createAccount } from "../controllers/account.controller";
 
 
+
 const routes = Router();
 
 routes.post("/create",   upload.single("file"), createProfile);
