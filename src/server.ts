@@ -11,7 +11,7 @@ import routes from './routes/profile.routes';
 const app = express();
 
 // Specify the port number for the server
-const port: number = 3000;
+const port: number = 5050;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
